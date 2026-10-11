@@ -750,6 +750,15 @@ bool AHardwareBuffer_isValidDescription(const AHardwareBuffer_Desc* desc, bool l
     return true;
 }
 
+#ifdef OPLUS_CAMERA
+// Qualcomm HAL_PIXEL_FORMAT_YCbCr_420_P010_VENUS. The OPlus camera's post-processing
+// maps its 10-bit RAW-HDR output in this format through AHardwareBuffer_lockPlanes and
+// takes the chroma plane from the result. Stock OxygenOS treats it as YUV; without that,
+// lockPlanes returns one plane, the chroma planes stay zeroed, and the camera crashes
+// writing chroma.
+constexpr uint32_t kQtiFormatYCbCr420P010Venus = 0x7FA30C0A;
+#endif
+
 bool AHardwareBuffer_formatIsYuv(uint32_t format) {
     switch (format) {
         case AHARDWAREBUFFER_FORMAT_Y8Cb8Cr8_420:
@@ -761,6 +770,9 @@ bool AHardwareBuffer_formatIsYuv(uint32_t format) {
         case AHARDWAREBUFFER_FORMAT_YCbCr_422_I:
         case AHARDWAREBUFFER_FORMAT_YCbCr_P010:
         case AHARDWAREBUFFER_FORMAT_YCbCr_P210:
+#ifdef OPLUS_CAMERA
+        case kQtiFormatYCbCr420P010Venus:
+#endif
             return true;
         default:
             return false;

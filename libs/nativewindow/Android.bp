@@ -91,7 +91,10 @@ cc_library {
         "-Werror",
         "-Wno-enum-compare",
         "-Wno-unused-function",
-    ],
+    ] + select(soong_config_variable("oplus_camera", "enabled"), {
+        true: ["-DOPLUS_CAMERA"],
+        default: [],
+    }),
 
     version_script: "libnativewindow.map.txt",
 

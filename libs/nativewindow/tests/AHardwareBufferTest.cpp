@@ -113,6 +113,28 @@ TEST(AHardwareBufferTest, ConvertToAndFromGrallocBits) {
         AHARDWAREBUFFER_USAGE_VENDOR_1 | AHARDWAREBUFFER_USAGE_VENDOR_13));
 }
 
+// Qualcomm HAL_PIXEL_FORMAT_YCbCr_420_P010_VENUS is YUV only on OPlus camera builds,
+// matching stock OxygenOS; other builds keep the AOSP format list. formatIsYuv is not
+// exported, so observe it through description validation in AHardwareBuffer_isSupported:
+// YUV descriptions must have one layer, and only non-YUV ones reject SENSOR_DIRECT_DATA.
+// Each assertion below is decided by validation alone, before any gralloc query.
+TEST(AHardwareBufferTest, QtiP010VenusIsYuvOnlyWithOplusCamera) {
+    constexpr uint32_t kQtiFormatYCbCr420P010Venus = 0x7FA30C0A;
+    AHardwareBuffer_Desc desc = {
+            .width = 64,
+            .height = 64,
+            .layers = 1,
+            .format = kQtiFormatYCbCr420P010Venus,
+            .usage = AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN,
+    };
+#ifdef OPLUS_CAMERA
+    desc.layers = 2;
+#else
+    desc.usage |= AHARDWAREBUFFER_USAGE_SENSOR_DIRECT_DATA;
+#endif
+    EXPECT_EQ(0, AHardwareBuffer_isSupported(&desc));
+}
+
 TEST(AHardwareBufferTest, GetCreateHandleTest) {
     AHardwareBuffer_Desc desc{
             .width = 64,
